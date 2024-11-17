@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ob-havo Ilovasi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="p-8">
+            <div class="mb-4">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Ob-havo Ilovasi</h1>
+                <p class="text-gray-600 mb-4">Shahar nomini kiriting</p>
+                
+                <!-- API Test Button -->
+                <button 
+                    onclick="testAPI()" 
+                    class="mb-4 bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                >
+                    API aloqasini tekshirish
+                </button>
+
+                <!-- Search Input -->
+                <div class="flex gap-2">
+                    <input 
+                        type="text" 
+                        id="cityInput"
+                        placeholder="Shahar nomini kiriting" 
+                        class="flex-1 p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                    <button 
+                        onclick="getWeather()"
+                        class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                    >
+                        Qidirish
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loading" class="hidden">
+                <p class="text-gray-600">Yuklanmoqda...</p>
+            </div>
+
+            <!-- Results -->
+            <div id="result" class="hidden">
+                <div class="mt-4 p-4 bg-gray-50 rounded">
+                    <h2 class="font-bold text-xl mb-2" id="cityName"></h2>
+                    <p class="text-lg" id="temperature"></p>
+                    <p class="text-lg" id="description"></p>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error" class="hidden mt-4 p-4 bg-red-100 text-red-700 rounded"></div>
+        </div>
+    </div>
+
+    <script>
+        // Update the JavaScript to show Uzbek messages
+        async function testAPI() {
+            const errorDiv = document.getElementById('error');
+            const loadingDiv = document.getElementById('loading');
+            
+            try {
+                loadingDiv.classList.remove('hidden');
+                errorDiv.classList.add('hidden');
+                
+                const response = await fetch('/api/test');
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('API muvaffaqiyatli ishlayapti! ✅');
+                } else {
+                    throw new Error(data.error || 'API test muvaffaqiyatsiz');
+                }
+            } catch (error) {
+                errorDiv.textContent = `API palakat: ${error.message}`;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                loadingDiv.classList.add('hidden');
+            }
+        }
+
+        async function getWeather() {
+            const cityInput = document.getElementById('cityInput');
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+            const loadingDiv = document.getElementById('loading');
+            const city = cityInput.value.trim();
+
+            if (!city) {
+                errorDiv.textContent = 'Iltimos, shahar nomini kiriting';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                loadingDiv.classList.remove('hidden');
+                resultDiv.classList.add('hidden');
+                errorDiv.classList.add('hidden');
+
+                const response = await fetch(`/api/weather/${encodeURIComponent(city)}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById('cityName').textContent = data.data.name;
+                    document.getElementById('temperature').textContent = 
+                        `Harorat: ${Math.round(data.data.main.temp)}°C`;
+                    document.getElementById('description').textContent = 
+                        `Ob-havo: ${data.data.weather[0].description}`;
+                    
+                    resultDiv.classList.remove('hidden');
+                } else {
+                    throw new Error(data.error || 'Ob-havo ma\'lumotlarini olishda xatolik');
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('hidden');
+            } finally {
+                loadingDiv.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('cityInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getWeather();
+            }
+        });
+
+        // Add to your script section
+const tg = window.Telegram.WebApp;
+tg.expand(); // Expand to full screen
+
+// Modify getWeather function
+async function getWeather() {
+    // ... existing code ...
+    if (data.success) {
+        // ... existing code ...
+        tg.MainButton.setText('Share Weather');
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            tg.sendData(JSON.stringify({
+                city: data.data.name,
+                temp: Math.round(data.data.main.temp),
+                desc: data.data.weather[0].description
+            }));
+        });
+    }
+}
+    </script>
+</body>
+</html>
