@@ -3,6 +3,7 @@
 const express = require('express');
 const axios = require('axios');
 require('dotenv').config();
+const path = require('path');
 
 const app = express();
 const port = process.env.PORT || 3000; // For hosting platforms
@@ -54,6 +55,10 @@ app.get('/api/weather/:city', async (req, res) => {
     } catch (error) {
         res.json({ success: false, error: error.message });
     }
+});
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(port, () => {
